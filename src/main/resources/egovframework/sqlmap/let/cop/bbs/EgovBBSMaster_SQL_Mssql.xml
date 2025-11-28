@@ -124,6 +124,8 @@
 		
 		<result property="t4TgYcDt" column="T4TGYCDT" columnIndex="15"/>
 		<result property="t4SinGoJa" column="T4SINGOJA" columnIndex="16"/>
+		<!-- 2025-11-20 추가  -->
+		<result property="t4SJGSE" column="t4SJGSE" columnIndex="17"/>
 	</resultMap>
 	
 	<resultMap id="docList" class="egovframework.let.cop.bbs.service.BoardMasterVO">
@@ -390,26 +392,35 @@
 	</parameterMap>
 	
 	
-	<select id="BBSAttributeManageDAO.selectDocList" parameterClass="BoardMasterVO"  resultMap="docList" remapResults="true">
-		<![CDATA[
-		
+	
+	<!-- 2025-11-20 변경 (송장생성.xls)
+			
+			WITH T1 AS (
+					SELECT CARRY,IV_NO,PO_NO,PO_LINE_NO,ITEM_CD,SUM(CAST(REPLACE(QTY,',','') AS float))   QTY
+					FROM  IMS_RPA_IMPORT_NOTIFY
+					WHERE DEL_YN IS  NULL
+					GROUP BY CARRY,IV_NO,PO_NO,PO_LINE_NO,ITEM_CD
+					
+			)
+			
 			SELECT DISTINCT
-			     d2   t4GwanliNo
+			     d2   			t4GwanliNo
 			    ,H_BL_NO        t3HBlNo
-				,JEUNGBING_DT_1 t3JBDt
-				,JEONGI_DT_1     t3JGDt
-				,''                    t3JGJk
+				,PO_NO		 	t3JBDt
+				,PO_LINE_NO    	t3JGDt
+				,IIF(ISNUMERIC(d279) = 1, REPLACE(REPLACE(d279,',',''), '.00', ''), '0')  t3JGJk
 			FROM IMS_RPA_FORWARDER T3
 				, IMS_RPA_CUSTOMS_AGENT T4
+				, T1
 			WHERE T3.H_BL_NO = T4.d52
 			AND T3.DEL_YN IS NULL
 			AND T4.DEL_YN IS NULL
 			AND T3.H_BL_NO = #searchBlNo#
-		]]>
-			
-	</select>
-	
-	<select id="BBSAttributeManageDAO.selectPassList" parameterClass="BoardMasterVO"  resultMap="passList" remapResults="true">
+		    AND T3.IN_NO  = T1.IV_NO  
+			AND T1.QTY = T4.d276   
+			AND T1.ITEM_CD = REPLACE(t4.d270,' ','')
+	 -->
+	<select id="BBSAttributeManageDAO.selectDocList" parameterClass="BoardMasterVO"  resultMap="docList" remapResults="true">
 		<![CDATA[
 		
 			WITH T1 AS (
@@ -418,13 +429,30 @@
 					WHERE DEL_YN IS  NULL
 					GROUP BY CARRY,IV_NO,PO_NO,PO_LINE_NO,ITEM_CD
 					
-			),
-			T3 AS (
-
-			SELECT DISTINCT * FROM IMS_RPA_FORWARDER
-			WHERE  DEL_YN IS  NULL
-			AND CONVERT(INT,REPLACE(RTRIM(LTRIM(BL_SEONJEOG_DT)),'.','')) > '20190831'
-					),
+			)
+			SELECT DISTINCT
+			     d2   t4GwanliNo
+			    ,H_BL_NO        t3HBlNo
+				,T1.PO_NO t3JBDt
+				,T1.PO_LINE_NO     t3JGDt
+				,IIF(ISNUMERIC(d279) = 1, REPLACE(REPLACE(d279,',',''), '.00', ''), '0')    t3JGJk
+			FROM IMS_RPA_FORWARDER T3
+				, IMS_RPA_CUSTOMS_AGENT T4
+				, T1
+			WHERE T3.H_BL_NO = T4.d52
+			AND T3.DEL_YN IS NULL
+			AND T4.DEL_YN IS NULL
+			AND T3.H_BL_NO = #searchBlNo#
+		    AND T3.IN_NO  = T1.IV_NO
+			AND T1.ITEM_CD = REPLACE(t4.d270,' ','')
+			
+			
+		]]>
+			
+	</select>
+	
+	
+	<!-- 2025-11-19 변경 (수입통관.xls)
 			T4 AS (
 
 			SELECT    DISTINCT *,REPLACE(d270,' ','') d270_KEY FROM IMS_RPA_CUSTOMS_AGENT
@@ -458,18 +486,66 @@
 			AND   T1.ITEM_CD = t4.d270_KEY
 			AND T3.H_BL_NO = #searchBlNo#
 			ORDER BY t4LanNo2,t4HeangNo
+			
+	
+	 -->
+	<select id="BBSAttributeManageDAO.selectPassList" parameterClass="BoardMasterVO"  resultMap="passList" remapResults="true">
+		<![CDATA[
+			
+			WITH T1 AS (
+					SELECT CARRY,IV_NO,PO_NO,PO_LINE_NO,ITEM_CD,SUM(CAST(REPLACE(QTY,',','') AS float))   QTY
+					FROM  IMS_RPA_IMPORT_NOTIFY
+					WHERE DEL_YN IS  NULL
+					GROUP BY CARRY,IV_NO,PO_NO,PO_LINE_NO,ITEM_CD
+					
+			),
+			T3 AS (
+
+			SELECT DISTINCT * FROM IMS_RPA_FORWARDER
+			WHERE  DEL_YN IS  NULL
+			AND CONVERT(INT,REPLACE(RTRIM(LTRIM(BL_SEONJEOG_DT)),'.','')) > '20190831'
+					),
+			T4 AS (
+
+			SELECT    DISTINCT *,REPLACE(d270,' ','') d270_KEY FROM IMS_RPA_CUSTOMS_AGENT
+			WHERE  DEL_YN IS  NULL
+			AND isdate(d32) = 1
+			AND isdate(d125) = 1
+			
+			)  
+			SELECT   DISTINCT   H_BL_NO	 t3HBlNo		
+						,FORMAT(CONVERT(date, d32),'yyyy.MM.dd')	t4TgYcDt
+						,IIF(d3 LIKE '%신대동%', '60747', IIF(d3 LIKE '%더블유%', '43199', d3))	t4SinGoJa
+						,d1     	t4SingoNo
+						,d27 t4SGSG
+						,FORMAT(CONVERT(date, d125),'yyyy.MM.dd')	t4SingoDt 	
+						,RTRIM(LTRIM(STR(REPLACE(d106,',',''), 50, 2)))	    t4CifUsd
+						,RTRIM(LTRIM(STR(REPLACE(d105,',',''), 50, 0)))	    t4CifKrw
+						,RTRIM(LTRIM(STR(REPLACE(d115,',',''), 50, 0)))		t4BGSGP				
+						,RTRIM(LTRIM(STR(REPLACE(d107,',',''), 50, 0)))	    t4GwanSe
+						,RTRIM(LTRIM(STR(REPLACE(d117,',',''), 50, 0)))		t4Bugase 
+						,PO_NO      t1PoNo	 
+						,PO_LINE_NO	 t1PoLineNo
+						,d267   t4LanNo2
+						,d268	 t4HeangNo
+						,d196	t4GSY
+						,RTRIM(LTRIM(STR(REPLACE(d201,',',''), 50, 0)))		t4SJGSE
+			FROM 	 T3
+					,T1
+					,T4
+			WHERE   T3.H_BL_NO = T4.d52
+			AND   T3.IN_NO  = T1.IV_NO  
+			AND   T1.QTY = T4.d276   
+			AND   T1.ITEM_CD = t4.d270_KEY
+			AND T3.H_BL_NO = #searchBlNo#
+			ORDER BY t4LanNo2,t4HeangNo
 			 
 		]]>
 			
 	</select>
 	
-	
-	
-	<select id="BBSAttributeManageDAO.selectBlList" parameterClass="BoardMasterVO"  resultMap="blList" remapResults="true">
-		<![CDATA[
-		
-			SELECT 
-				 H_BL_NO               	t3HblNo
+	<!-- 	2025-11-19 변경 (BL.xls)
+				H_BL_NO               	t3HblNo
 				,BL_DT_1        		t3BSDt
 				,ETD_DT                	t3EtdDt 
 				,ETA_DT				  	t3EtaDt	
@@ -488,6 +564,30 @@
 				,SEONJEOG_SEOLYU_SONGBUCHEO_CD  t3SJSLSBCCd
 				,SIL_IBHANG_DT          t3SIHDt
 				,IBGO_YEJEONG_DT     	t3IGYJDt
+	 -->
+	<select id="BBSAttributeManageDAO.selectBlList" parameterClass="BoardMasterVO"  resultMap="blList" remapResults="true">
+		<![CDATA[
+		
+			SELECT 
+				 H_BL_NO               	t3HblNo
+				,BL_DT_1        		t3BSDt
+				,ETD_DT                	t3EtdDt 
+				,ETA_DT				  	t3EtaDt	
+				,SEONJEOG_GUG_CD     	t3SJGCd 
+				,DOCHAG_GUG_CD       	t3DJGCd
+				,IIF(SEONJEOG_HANG_CD='NAGOYA','NGO',LEFT(SEONJEOG_HANG_CD,3))   	t3SJHCd
+				,DOCHAG_HANG_CD     	t3DCHCd
+				,FLT_VSSL_NM           	t3FVNm
+				,C_20FT_QT              t3C20Qt
+				,C_40FT_QT              t3C40Qt
+				,UNSONG_GB            	t3USgb
+				,CHONG_POJANG_EA   		t3CPJEa  
+				,IIF(ISNULL(NET_WG,'')='',GROSS_WG, NET_WG)	t3NWg
+				,GROSS_WG             	t3GWg
+				,BL_DT_1  		t3SLSBDt
+				,SEONJEOG_SEOLYU_SONGBUCHEO_CD  t3SJSLSBCCd
+				,SIL_IBHANG_DT          t3SIHDt
+				,IIF(ISNULL(IBGO_YEJEONG_DT,'')='', SIL_IBHANG_DT, IBGO_YEJEONG_DT)	t3IGYJDt
 			FROM  IMS_RPA_FORWARDER
 			WHERE H_BL_NO = #searchBlNo#
 			AND   DEL_YN IS  NULL
@@ -496,9 +596,11 @@
 			
 	</select>
 	
-	
+	<!-- 2025-11-18 변경  /*BBSAttributeManageDAO.selectCargoList*/
+	      1. REPLACE(T2.ACNT_DT, '-', '.')
+		  2. RTRIM(LTRIM(STR(T2.JEOGYONG_RT, 50, 5)))
+		  3. REPLACE(T2.ACNT_DT, '-', '.') -->
 	<select id="BBSAttributeManageDAO.selectCargoList" parameterClass="BoardMasterVO"  resultMap="cargoList" remapResults="true">
-		/*BBSAttributeManageDAO.selectCargoList*/
 		<![CDATA[
 		
 			WITH T2 AS (
@@ -529,13 +631,13 @@
 			)  
 			SELECT 
 				  T3.BL_DT_1 t3BlDt 
-				 ,T2.ACNT_DT t3SSDt 				  
+				 ,REPLACE(T2.ACNT_DT, '-', '.') t3SSDt 		  
 				 ,T2.STOCK_NO t2StockNo				 
-				 ,T2.JEOGYONG_RT t2JyRt 
+				 ,RTRIM(LTRIM(STR(REPLACE(T2.JEOGYONG_RT, ',', ''), 50, 5))) t2JyRt 
 
 				 ,T4.d84 t4AACUERt
 				 ,T4.d83 t4AACDw
-				 ,T2.ACNT_DT t3SSDt 
+				 ,REPLACE(T2.ACNT_DT, '-', '.') t3SSDt 
 				 ,T2.CO_KRW_EXCH_INSR_FEE t2CKEIFee 
 				 
 				 ,T3.IN_NO t3InNo 
@@ -549,6 +651,14 @@
 			
 	</select>
 	
+	<!-- 2025-11-18 변경 (수입신고.xls)
+	      1. T2 테이블 추가
+		  2. T2.ACNT_DT t2AcntDt 추가
+		  3. 기존 t3SSDt 변경 > REPLACE(T2.ACNT_DT, '-', '.')
+		  4. IIF(t1Carry = 'SEA', 'O', IIF(t1Carry = 'AIR', 'A', t1Carry))
+		  5. t4DanGa 단가	  
+	 -->
+		  
 	<select id="BBSAttributeManageDAO.selectInvoiceList" parameterClass="BoardMasterVO"  resultMap="invoiceList" remapResults="true">
 		<![CDATA[
 		
@@ -559,6 +669,19 @@
 					WHERE DEL_YN IS  NULL
 					GROUP BY CARRY,IV_NO,PO_NO,PO_LINE_NO,ITEM_CD
 					
+			),
+			T2 AS (
+				SELECT DISTINCT VAL IV_NO, ACNT_DT FROM
+				(
+					SELECT DISTINCT IV_NO_1,IV_NO_2,IV_NO_3,IV_NO_4,IV_NO_5,IV_NO_6,IV_NO_7,IV_NO_8,IV_NO_9, ACNT_DT
+					 FROM [MOT_RPQ].[dbo].[IMS_RPA_CARGO_INSURANCE]
+					 WHERE DEL_YN is null
+				 ) as ST
+				UNPIVOT
+				(
+				  VAL FOR COL IN ( IV_NO_1,IV_NO_2,IV_NO_3,IV_NO_4,IV_NO_5,IV_NO_6,IV_NO_7,IV_NO_8,IV_NO_9 )
+				 ) as PT
+				WHERE LEN(VAL) > 0 
 			),
 			T3 AS (
 
@@ -577,13 +700,13 @@
 			
 			)  
 			SELECT t1InNo,
-			    t1Carry,
-			    t3SSDt,
+			    IIF(t1Carry = 'SEA', 'O', IIF(t1Carry = 'AIR', 'A', t1Carry)) t1Carry,
+			    REPLACE(t2AcntDt, '-', '.') t3SSDt,
 			    t1PoNo,
 			    t1PoLineNo,
 			    t1ItemCd,
 			    t1Qty,
-			    t4DanGa,
+			    IIF(ISNUMERIC(t4DanGa) = 1, ROUND(CONVERT(NUMERIC, REPLACE(t4DanGa,',','')), 0), '0') t4DanGa,
 			    t4DanGa2,
 			    t4GeumAeg,
 			    t4JeCurDw,
@@ -622,12 +745,14 @@
 					T4.d162 t4SebeonCd,
 					T3.GONGGEUB_CO_CD_2 t3GgCoCd2,
 					T3.H_BL_NO t3HBlNo,
-					T4.d67 t4IndoJk
+					T4.d67 t4IndoJk,
+					T2.ACNT_DT t2AcntDt
 			
 				from
 					T4 T4 left outer join
-					T3 T3 on T4.d52 = T3.H_BL_NO left outer join 
-					T1 T1 on  T1.IV_NO = T3.IN_NO
+					T3 T3 on T4.d52 = T3.H_BL_NO left outer join
+					T2 T2 on T3.IN_NO = T2.IV_NO left outer join 
+					T1 T1 on  T1.IV_NO = T3.IN_NO 
 					and T1.QTY = T4.d276
 					and T1.ITEM_CD = T4.d270_KEY
 					and T1.QTY = T4.d276
@@ -644,9 +769,9 @@
 	
 	
 	
-	
+	<!--BBSAttributeManageDAO.selectCargoList-->
 	<select id="BBSAttributeManageDAO.selectBBSMasterInfs" parameterClass="BoardMasterVO" resultMap="boardMasterList" remapResults="true">
-	/*BBSAttributeManageDAO.selectCargoList*/	
+		
 		<![CDATA[
 			WITH T1 AS (
 			SELECT DISTINCT IV_NO FROM  IMS_RPA_IMPORT_NOTIFY
@@ -1427,7 +1552,7 @@
 	
 	<procedure id="BBSAttributeManageDAO.selectYetArrivedList" parameterMap="extraParam"  resultMap="yetArrivedList,yetArrivedTotal" remapResults="true">
 		<![CDATA[
-			{call dbo.getUetarrived(?)} 
+			{call dbo.getUetarrived_251124(?)} 
 		]]>
 			
 	</procedure>

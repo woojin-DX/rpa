@@ -1082,9 +1082,20 @@ public class EgovBBSAttributeManageController {
 	    cell = row.createCell(21);
 	    cell.setCellValue("관세");
 	    sheet.setColumnWidth(21, 4000);
-	    
-	    
-	    
+	    /* 2025-11-24 추가  (수입통관 집계) */
+	    class TempTB {
+	    	String t4LanNo24;
+	    	String t4GSY25;
+	    	String t4SJGSE26;
+	    	
+	    	TempTB(String t4LanNo24, String t4GSY25, String t4SJGSE26){
+	    		this.t4LanNo24 = t4LanNo24;
+	    		this.t4GSY25 = t4GSY25;
+	    		this.t4SJGSE26 = t4SJGSE26;
+	    	}
+	    }
+	    List<TempTB> tempTB = new ArrayList<>();
+	    /* //2025-11-24 추가  (수입통관 집계) */
 	    
 	    for(BoardMasterVO vo : list){
 	    	row = sheet.createRow(rowCount++);
@@ -1116,12 +1127,32 @@ public class EgovBBSAttributeManageController {
 	        
 	        row.createCell(cellCount++).setCellValue(vo.gett4GSY());
 	        row.createCell(cellCount++).setCellValue(vo.gett4SJGSE());   
-	    
-	    
-	    
-	    
+	        
+		    /* 2025-11-24 추가  (수입통관 집계) */
+	        int intT4HeangNo = Integer.parseInt(vo.gett4HeangNo());
+	        if (intT4HeangNo == 1) {
+	        	tempTB.add(new TempTB(vo.gett4LanNo2(), vo.gett4GSY(), vo.gett4SJGSE()));
+	        }
+
+		    /* //2025-11-24 추가  (수입통관 집계) */
 	    }
-	 
+	    
+
+	    /* 2025-11-24 추가  (수입통관 집계) */
+		rowCount = 1;
+		for (TempTB t : tempTB) {
+			if (cellCount > 20) {
+				row = sheet.getRow(rowCount++);
+			} else {
+				row = sheet.createRow(rowCount++);
+			}
+	    	cellCount = 23;
+			row.createCell(cellCount++).setCellValue(t.t4LanNo24);
+			row.createCell(cellCount++).setCellValue(t.t4GSY25);
+			row.createCell(cellCount++).setCellValue(t.t4SJGSE26);
+        }
+	    /* //2025-11-24 추가  (수입통관 집계) */
+	    
 	    String fileName ="수입통관.xls";
 	    fileName  = URLEncoder.encode(fileName,"UTF-8");
 	    
@@ -1218,16 +1249,16 @@ public class EgovBBSAttributeManageController {
 	    sheet.setColumnWidth(1, 4000);
 	    
 	    cell = row.createCell(2);
-	    cell.setCellValue("증빙일자");
+	    cell.setCellValue("PO번호"); /* 증빙일자 */
 	    sheet.setColumnWidth(2, 4000);
 	    
 	    
 	    cell = row.createCell(3);
-	    cell.setCellValue("전기일자");
+	    cell.setCellValue("품목코드");  /* 전기일자 */
 	    sheet.setColumnWidth(3, 4000);
 	    
 	    cell = row.createCell(4);
-	    cell.setCellValue("지급조건");
+	    cell.setCellValue("물대");  /* 지급조건 */
 	    sheet.setColumnWidth(4, 4000);
 	    
 	    
