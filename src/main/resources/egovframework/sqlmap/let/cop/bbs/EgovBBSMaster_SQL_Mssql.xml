@@ -1553,7 +1553,7 @@
 	
 	<procedure id="BBSAttributeManageDAO.selectYetArrivedList" parameterMap="extraParam"  resultMap="yetArrivedList,yetArrivedTotal" remapResults="true">
 		<![CDATA[
-			{call dbo.getUetarrived(?)} 
+			{call dbo.getUetarrived_251124(?)} 
 		]]>
 			
 	</procedure>
