@@ -36,7 +36,7 @@
 
 <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
-<script src="http://malsup.github.com/jquery.form.js"></script>
+<script src="https://malsup.github.io/jquery.form.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <style>
 /*datepicer 버튼 롤오버 시 손가락 모양 표시*/

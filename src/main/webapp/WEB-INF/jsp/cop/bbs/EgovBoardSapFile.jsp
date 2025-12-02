@@ -19,7 +19,7 @@
 <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
 <script type="text/javascript" src="<c:url value='/js/egovframework/com/cmm/fms/EgovMultiFile.js'/>" ></script>
-<script src="http://malsup.github.com/jquery.form.js"></script>
+<script src="https://malsup.github.io/jquery.form.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <link type="text/css" rel="stylesheet" href="<c:url value='/css/egovframework/com/com.css?<%=today%>' />">
@@ -131,7 +131,6 @@
     	$("#fileGubunNm").val(txt);
 
         if (window.confirm("파일을 등록하시겠습니까?")) {
-            /* 2025-12-02 변경
             $("#frm").ajaxForm({
                 type: 'POST',
                 url: '<c:url value='/file/fileUploadSap.do'/>',
@@ -166,38 +165,7 @@
                         + "message1 : " + status + "\n"
                         + "error: " + err);
                 }
-            }).submit();*/
-        	var formData = new FormData($("#frm")[0]);
-
-        	$.ajax({
-        	    type: 'POST',
-        	    url: '<c:url value="/file/fileUploadSap.do"/>',
-        	    data: formData,
-        	    dataType: "json",
-        	    enctype: "multipart/form-data",
-        	    contentType: false,
-        	    processData: false,
-        	    success: function(result) {
-        	        if (result.status == 0) {
-        	            alert(result.msg);
-        	            document.myForm.method = "post";
-        	            document.myForm.action = "/cop/bbs/SelectBBSMasterInfs.do";
-        	            document.myForm.target = opener.window.name;
-        	            document.myForm.submit();
-        	            window.close();
-        	        } else if (result.status == 1) {
-        	            alert(result.msg);
-        	        }
-        	    },
-        	    error: function(data, status, err) {
-        	        alert("서버가 응답하지 않습니다.\n다시 시도해주시기 바랍니다.\n"
-        	            + "code: " + data.status + "\n"
-        	            + "message :" + data.responseText + "\n"
-        	            + "message1 : " + status + "\n"
-        	            + "error: " + err);
-        	    }
-        	});
-
+            }).submit();
         }
 	
 
